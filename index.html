@@ -52,10 +52,10 @@ function loadData() {
         const type = (row.type || "").trim();
         const icon = icons[type] || icons.danger;
 
-        const marker = L.marker(
-          [parseFloat(row.lat), parseFloat(row.lon)],
-          { icon }
-        ).addTo(map);
+const marker = L.marker(
+  [parseFloat(row.lat), parseFloat(row.lon)]
+).addTo(map);
+
 
         marker.bindPopup(
           `<b>${row.nom || ""}</b><br>${row.infos || ""}`
