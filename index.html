@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Carte Points</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<script>
+// 1) COLLE ICI TON LIEN CSV GOOGLE SHEETS
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7pZMfxJism2qinQmFRylSKY7xmycdZx9zLC45X1SQnBPtEqaj2p6FJmjwBoHj42B2zY6P9-A3DCgg/pub?gid=0&single=true&output=csv";
+
+// 2) Carte centrée sur l'Indre / Berry par défaut
+const map = L.map('map').setView([46.8, 1.6], 8);
+
+// 3) Fond de carte OpenStreetMap (gratuit)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+// 4) Icônes selon le type (on les créera juste après)
+const icons = {
+  samu: L.icon({ iconUrl: 'icons/samu.png', iconSize: [32,32] }),
+  dz: L.icon({ iconUrl: 'icons/dz.png', iconSize: [32,32] }),
+  danger: L.icon({ iconUrl: 'icons/danger.png', iconSize: [32,32] })
+};
+
+let markers = [];
+
+function loadData() {
+  // efface anciens points
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  // lit le CSV
+  Papa.parse(SHEET_URL, {
+    download: true,
+    header: true,
+    complete: function(results) {
+      results.data.forEach(row => {
+        if (!row.lat || !row.lon) return;
+
+        const type = (row.type || "").trim();
+        const icon = icons[type] || icons.danger;
+
+        const marker = L.marker(
+          [parseFloat(row.lat), parseFloat(row.lon)],
+          { icon }
+        ).addTo(map);
+
+        marker.bindPopup(
+          `<b>${row.nom || ""}</b><br>${row.infos || ""}`
+        );
+
+        markers.push(marker);
+      });
+    }
+  });
+}
+
+// chargement initial
+loadData();
+
+// rafraîchissement automatique toutes les 30 secondes
+setInterval(loadData, 30000);
+</script>
+
+</body>
+</html>
